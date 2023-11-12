@@ -1,0 +1,198 @@
+################################################################################
+#   KineticAuth
+################################################################################
+#
+# API Key is also Guest User Account
+#
+DROP TABLE IF EXISTS pdf_api_key;
+CREATE TABLE pdf_api_key (
+       id int NOT NULL,
+       user_id int NOT NULL DEFAULT '0',
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       email varchar(100) NOT NULL DEFAULT '',
+       first_name varchar(100) NOT NULL DEFAULT '',
+       last_name varchar(100) NOT NULL DEFAULT '',
+       org_name varchar(160) NOT NULL DEFAULT '',
+       public_key varchar(16) NOT NULL DEFAULT '',
+       private_key varchar(65) NOT NULL DEFAULT '',
+       ip_address varchar(20) NOT NULL DEFAULT '',
+       user_agent varchar(200) NOT NULL DEFAULT '',
+       email_verified varchar(1) NOT NULL DEFAULT '',
+       status varchar(10) NOT NULL DEFAULT 'active',
+       expiration_date DATETIME DEFAULT NULL,
+       form_count INT NOT NULL DEFAULT '0',
+       max_form_count INT NOT NULL DEFAULT '250'
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_api_key
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_api_key
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+   CREATE TABLE pdf_api_priv (
+       id int NOT NULL,
+       key_id int NOT NULL DEFAULT '0',
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       priv_id varchar(60) NOT NULL DEFAULT ''
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_api_priv
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_api_priv
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+   CREATE TABLE pdf_blocked_email_address (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       email varchar(280) NOT NULL DEFAULT '',
+       note varchar(500) NOT NULL DEFAULT ''
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_blocked_email_address
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_blocked_email_address
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+   CREATE TABLE pdf_blocked_ip_address (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       ip varchar(280) NOT NULL DEFAULT '',
+       email varchar(280) NOT NULL DEFAULT '',
+       note varchar(500) NOT NULL DEFAULT ''
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_blocked_ip_address
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_blocked_ip_address
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+CREATE TABLE pdf_org (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       organization_name varchar(180) NOT NULL DEFAULT '',
+       salutation varchar(180) NOT NULL DEFAULT '',
+       first_name varchar(180) NOT NULL DEFAULT '',
+       last_name varchar(180) NOT NULL DEFAULT '',
+       email varchar(160) NOT NULL DEFAULT '',
+       phone varchar(30) NOT NULL DEFAULT ''
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_org
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_org
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+   CREATE TABLE pdf_user (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       salutation varchar(180) NOT NULL DEFAULT '',
+       first_name varchar(180) NOT NULL DEFAULT '',
+       last_name varchar(180) NOT NULL DEFAULT '',
+       company_name varchar(180) NOT NULL DEFAULT '',
+       org_id int(11) NOT NULL DEFAULT '0',
+       email varchar(160) NOT NULL DEFAULT '',
+       phone varchar(30) NOT NULL DEFAULT '',
+       status varchar(30) NOT NULL DEFAULT 'active'
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_user (
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_user (
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+
+
+
+################################################################################
+#   KineticPdf
+################################################################################
+
+   drop table if exists pdf_form_data;
+   CREATE TABLE pdf_form_data (
+       id int NOT NULL,
+       user_id int NOT NULL DEFAULT '0',
+       org_id int NOT NULL DEFAULT '0',
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       title varchar(120) NOT NULL DEFAULT '',
+       author varchar(120) NOT NULL DEFAULT '',
+       form_id varchar(20) NOT NULL default '',
+       private_key varchar(100) default '',
+       metadata_json varchar(4000)  NOT NULL DEFAULT '',
+       data_json varchar(4000)  NOT NULL DEFAULT '',
+       email_from varchar(200) NOT NULL DEFAULT '',
+       email_to varchar(200) NOT NULL DEFAULT '',
+       email_subject varchar(200) NOT NULL DEFAULT '',
+       email_body varchar(1000) NOT NULL DEFAULT ''
+   ) ENGINE=InnoDB;
+
+   ALTER TABLE pdf_form_data
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_form_data
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+   CREATE TABLE pdf_form_template (
+       id int NOT NULL,
+       form_id int NOT NULL,
+       user_id int NOT NULL DEFAULT '0',
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       path varchar(300) NOT NULL DEFAULT '',
+
+    ALTER TABLE pdf_form_template
+      ADD PRIMARY KEY (`id`);
+
+    ALTER TABLE pdf_form_template
+      MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+    CREATE TABLE pdf_template (
+        id int NOT NULL,
+        create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        template_name varchar(280) NOT NULL DEFAULT '',
+        user_id int NOT NULL DEFAULT '0',
+        org_id int NOT NULL DEFAULT '0',
+        path varchar(280) NOT NULL DEFAULT '',
+        description varchar(2000) NOT NULL DEFAULT '',
+     )  ENGINE=InnoDB;
+
+    ALTER TABLE pdf_template
+      ADD PRIMARY KEY (`id`);
+
+    ALTER TABLE pdf_template
+      MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+
+################################################################################
+#   KineticEmail
+################################################################################
+
+drop table if exists pdf_processed_email;
+   CREATE TABLE pdf_processed_email (
+       id int NOT NULL,
+        create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        to_address varchar(280) NOT NULL DEFAULT '',
+        from_address varchar(280) NOT NULL DEFAULT '',
+        message_number varchar(20) NOT NULL DEFAULT '0',
+        subject varchar(280) NOT NULL DEFAULT '',
+        sender varchar(280) NOT NULL DEFAULT '',
+        body varchar(2800) NOT NULL DEFAULT '',
+        attachment_file_name varchar(280) NOT NULL DEFAULT '',
+        processed varchar(2) NOT NULL DEFAULT 'N',
+        form_data_id int NOT NULL DEFAULT '0'
+     )  ENGINE=InnoDB;
+
+    ALTER TABLE pdf_processed_email
+      ADD PRIMARY KEY (`id`);
+
+    ALTER TABLE pdf_processed_email
+      MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+
+
+
+#   KineticEmail.process_inbox_batch --> KineticImapEmail.get_inbox_messages --> KineticPdf.process_pdf_form(f)
