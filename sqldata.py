@@ -26,7 +26,7 @@ class Db:
 
     @classmethod
     def connect(cls):
-        connection_vault_path = '/Users/user/pwd.json'
+        connection_vault_path = '/var/pwd.json'
 
         try:
             with open(connection_vault_path, 'r') as connection_file:
