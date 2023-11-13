@@ -139,7 +139,7 @@ class KineticPdf:
 
         output_file_name= j['file_name']
         new_values = j['data']
-        output_pdf_path = "/Users/user/tmp/" + output_file_name
+        output_pdf_path = "/var/www/tmp" + output_file_name
         output_file_name = KineticPdf.update_pdf_form(file_path, output_pdf_path, new_values)
         return output_file_name, output_pdf_path
 
@@ -359,7 +359,7 @@ class KineticPdf:
     @staticmethod
     def upload_template(temp_file_path, file_name, api_key, template_name, template_description):
 
-        base_path = '/Users/user/templates/'
+        base_path = '/var/www/templates/'
         user = KineticAuth.get_user_from_api_key(api_key)
         user_id = user['id']
 
@@ -389,11 +389,11 @@ class KineticPdf:
 
     @staticmethod
     def load_form(template_path, output_path, sql):
-        template_path = '/Users/user/Downloads/euc-hockey-form-blank.pdf'
+        template_path = 'euc-hockey-form-blank.pdf'
         sql = "select data_json from kseas_form_data where id = 15"
         rs = SqlData.sql0(sql)
         values = rs
-        return KineticPdf.update_pdf_form(template_path,'/Users/user/Downloads/new2.pdf', json.loads(values['data_json']))
+        return KineticPdf.update_pdf_form(template_path,'new2.pdf', json.loads(values['data_json']))
 
     #########################################################################
     # Get completed form data for entire API key, form_id, or app_id
@@ -691,7 +691,7 @@ class KineticPdf:
             results.append(j)
             ws.append(j)
 
-        wb.save('/Users/user/docs/' + public_key + '.xlsx')
+        wb.save('/var/www/docs/' + public_key + '.xlsx')
         return results
 
 

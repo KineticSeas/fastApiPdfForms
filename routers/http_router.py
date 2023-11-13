@@ -32,12 +32,6 @@ http_router = APIRouter()
 #    "output_name": "something.pdf"
 # }
 ##################################################################################
-@http_router.get("/test/")
-def test():
-    # Path to your PDF file
-    pdf_path = ('/Users/user/Downloads/Kinetic_Forms_Registration_Sig2.pdf')
-    return KineticPdf.read_pdf_signature(pdf_path)
-
 
 @http_router.post("/download/")
 def download(response: Response, file_path, output_name):
@@ -63,7 +57,7 @@ def download(response: Response, file_path, output_name):
 ##################################################################################
 @http_router.get("/large_download/")
 def download_file(response: Response):
-    file_path = "/Users/user/Downloads/euc-hockey-form-new2.pdf"  # Replace with the path to your file
+    file_path = "/euc-hockey-form-new2.pdf"  # Replace with the path to your file
 
     def file_generator(filename):
         with open(filename, "rb") as f:
