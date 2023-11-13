@@ -31,6 +31,8 @@ class Db:
         try:
             with open(connection_vault_path, 'r') as connection_file:
                 connection_dict = json.load(connection_file)
+                print(connection_dict)
+
             return pymysql.connect(
                 host=connection_dict['host'],
                 user=connection_dict['user'],
