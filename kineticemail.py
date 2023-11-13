@@ -202,7 +202,7 @@ class KineticImapEmail():
     def get_messages(data):
         j = data['data']
 
-        connection_vault_path = '/Users/user/emailpwd.json'
+        connection_vault_path = '/var/emailpwd.json'
 
         if 'imap_server' in j:
             imap_server = j['imap_server']
@@ -498,31 +498,18 @@ class KineticImapEmail():
 
     @staticmethod
     def email_form(j):
-        connection_vault_path = '/Users/user/emailpwd.json'
+        connection_vault_path = '/var/emailpwd.json'
         with open(connection_vault_path, 'r') as connection_file:
             connection_dict = json.load(connection_file)
 
-
-        # mail_from = j['from']
-        # mail_to = j['to']
-        # body = j['message']
-        # subject = j['subject']
-        # body = j['body']
-        # path = j['path']
-        #server = KineticEmail.auto_connect_smtp('/Users/user/emailpwd.json')
-        # Create email message
-
         message = MIMEMultipart()
-        # message['From'] = mail_from
-        message['To'] = "testform@smtp.kineticforms.org"
-        # message['To'] = mail_to
-        message['From'] = "forms@smtp.kineticforms.org"
-        # message['Subject'] = subject
-        message['Subject'] = "This is a test"
-        body = ""
+        message['To'] = j['email_to']
+        message['From'] = j['email_from']
+        message['Subject'] = j['email_subject']
+        body = j['email_body']
+        path = j['output_path']
         message.attach(MIMEText(body,'plain'))
 
-        path="/Users/user/tmp/output.pdf"
         fn = path.split("/")[-1]
 
         with open(path, 'rb') as f:
@@ -533,9 +520,9 @@ class KineticImapEmail():
         part.add_header('Content-Disposition', f'attachment; filename= {fn}')
         message.attach(part)
 
-        with smtplib.SMTP('kineticforms.org', 587) as server:
+        with smtplib.SMTP(connection_dict['smtp_server'], connection_dict['smtp_port']) as server:
             server.starttls()
-            server.login('forms@smtp.kineticforms.org', 'Loipol229!')
+            server.login(connection_dict['email_address'], connection_dict['email_password'])
             server.send_message(message)
 
         # server.send_message(message)
