@@ -14,8 +14,7 @@ from starlette.responses import Response, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import shutil
-from kineticpdf import KineticPdf
-from kinetichttp import KineticHttp
+from processpdf import KineticPdf
 import tempfile
 
 http_router = APIRouter()

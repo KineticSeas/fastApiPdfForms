@@ -1,8 +1,12 @@
+import json
+
 from fastapi import FastAPI, File, UploadFile, APIRouter, Request
-from kineticpdf import KineticPdf
-from kineticemail import KineticImapEmail
+from processpdf import ProcessPdf
+from queries import Queries
 
 data_router = APIRouter()
+
+DB_CONNECTION_VAULT = "/var/pwd.json"
 
 #################################################################################
 # Get data from uploaded forms for an organization.
@@ -20,23 +24,11 @@ data_router = APIRouter()
 # /list_forms/ :
 # /
 
-@data_router.post("/get_data/")
-async def get_data(json: str):
-    return KineticPdf.get_data(json)
-
-
-@data_router.post('/guest-download/')
-async def create_user(request: Request):
-    json_data = await request.json()
-    d = KineticPdf.get_guest_xls(json_data['data'])
-    return d
-
-
-@data_router.post('/list_templates/')
-async def template_list(request: Request):
-    json_data = await request.json()
-    d = KineticPdf.get_template_list(json_data)
-    return {"data": d, "error_code": "0", "error_msg": ""}
+#@data_router.post('/list_templates/')
+#async def template_list(request: Request):
+#    json_data = await request.json()
+#    d = KineticPdf.get_template_list(json_data)
+#    return {"data": d, "error_code": "0", "error_msg": ""}
 
 
 #################################################################################
@@ -50,9 +42,10 @@ async def template_list(request: Request):
 #   "form_id": 999
 # }
 #################################################################################
-@data_router.post('/delete_template')
-async def list_forms(json: str):
-    return KineticPdf.delete_template(json)
+
+#@data_router.post('/delete_template')
+#async def list_forms(json: str):
+#    return KineticPdf.delete_template(json)
 
 #################################################################################
 # Delete uploaded form data from the pdf_form_data table.
@@ -66,15 +59,33 @@ async def list_forms(json: str):
 #   "form_id": 999
 # }
 #################################################################################
-@data_router.post('/delete_form_data/')
-async def delete_form_data(json: str):
-    return KineticPdf.delete_form_data(json)
+#@data_router.post('/delete_form_data/')
+#async def delete_form_data(json: str):
+#    return KineticPdf.delete_form_data(json)
 
 
-@data_router.post('/create_form/')
-async def create_form(json: str):
-    return KineticPdf.get_form(json)
+#@data_router.post('/create_form/')
+#async def create_form(json: str):
+#    return KineticPdf.get_form(json)
+
+@data_router.post("/get_form_data")
+async def get_form_data(private_key: str):
+    q = Queries(DB_CONNECTION_VAULT)
+    j = {"private_key": private_key }
+    return {"error_code": "0", "error_msg": "", "data": q.get_data(json.dumps(j)) }
+
+@data_router.post("/json_get_form_data/")
+async def get_data(j: str):
+    q = Queries(DB_CONNECTION_VAULT)
+    return {"error_code": "0", "error_msg": "", "data": q.get_data(j) }
 
 
+@data_router.post("/json_load_form/")
+async def json_load_form(j: str):
+    return {"error_code": "0", "error_msg": "", "data": ProcessPdf.json_load_form_sql(j) }
 
-
+####@data_router.post('/guest-download/')
+####async def create_user(request: Request):
+####    json_data = await request.json()
+####    d = KineticPdf.get_guest_xls(json_data['data'])
+####    return d

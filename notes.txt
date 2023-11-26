@@ -4,6 +4,75 @@
 #
 # API Key is also Guest User Account
 #
+
+DROP TABLE IF EXISTS pdf_mailbox;
+CREATE TABLE pdf_mailbox (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       user_id int NOT NULL NOT NULL DEFAULT '0',
+       imap_server varchar(400) NOT NULL NOT NULL DEFAULT '',
+       smtp_server varchar(400) NOT NULL NOT NULL DEFAULT '',
+       email_address varchar(400) NOT NULL DEFAULT '',
+       email_password varchar(400) NOT NULL DEFAULT '',
+       smtp_port varchar(400) NOT NULL DEFAULT '',
+       automatic varchar(1) NOT NULL DEFAULT 'Y'
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_mailbox
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_mailbox
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+DROP TABLE IF EXISTS pdf_option_data;
+CREATE TABLE pdf_option_data (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       form_id int NOT NULL NOT NULL DEFAULT '0',
+       key_id int NOT NULL NOT NULL DEFAULT '0',
+       option_id int NOT NULL DEFAULT '0',
+       option_value text
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_option_data
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_option_data
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+DROP TABLE IF EXISTS pdf_form_option;
+CREATE TABLE pdf_form_option (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       form_id int NOT NULL NOT NULL DEFAULT '0',
+       section_id int NOT NULL NOT NULL DEFAULT '0',
+       option_id int NOT NULL,
+       option_name varchar(400) NOT NULL DEFAULT ''
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_form_option
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_form_option
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+
+
+DROP TABLE IF EXISTS pdf_chat;
+CREATE TABLE pdf_chat (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       from_address varchar(100) NOT NULL DEFAULT '',
+       role varchar(20) NOT NULL DEFAULT '',
+       contents text''
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_chat
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_chat
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
 DROP TABLE IF EXISTS pdf_api_key;
 CREATE TABLE pdf_api_key (
        id int NOT NULL,
@@ -12,6 +81,7 @@ CREATE TABLE pdf_api_key (
        email varchar(100) NOT NULL DEFAULT '',
        first_name varchar(100) NOT NULL DEFAULT '',
        last_name varchar(100) NOT NULL DEFAULT '',
+       form_name varchar(100) NOT NULL DEFAULT '',
        org_name varchar(160) NOT NULL DEFAULT '',
        public_key varchar(16) NOT NULL DEFAULT '',
        private_key varchar(65) NOT NULL DEFAULT '',
@@ -20,6 +90,12 @@ CREATE TABLE pdf_api_key (
        email_verified varchar(1) NOT NULL DEFAULT '',
        status varchar(10) NOT NULL DEFAULT 'active',
        expiration_date DATETIME DEFAULT NULL,
+       alert_empty_forms varchar(1) NOT NULL DEFAULT 'Y',
+       alert_no_attachment varchar(1) NOT NULL DEFAULT 'Y',
+       alert_no_contact_list varchar(1) NOT NULL DEFAULT 'N',
+	   alert_success varchar(1) NOT NULL DEFAULT 'Y',
+       contact_list_id int NOT NULL DEFAULT '0',
+       mailbox_id int NOT NULL DEFAULT '0',
        form_count INT NOT NULL DEFAULT '0',
        max_form_count INT NOT NULL DEFAULT '250'
     )  ENGINE=InnoDB;
@@ -29,6 +105,28 @@ CREATE TABLE pdf_api_key (
 
    ALTER TABLE pdf_api_key
      MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+   CREATE TABLE pdf_user_mailbox (
+       id int NOT NULL,
+       create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       user_id int NOT NULL DEFAULT '0',
+       mailbox_name  varchar(100) NOT NULL DEFAULT '',
+       email  varchar(100) NOT NULL DEFAULT '',
+       imap_server  varchar(100) NOT NULL DEFAULT '',
+       imap_port  varchar(100) NOT NULL DEFAULT '',
+       smtp_server  varchar(100) NOT NULL DEFAULT '',
+       smtp_port  varchar(100) NOT NULL DEFAULT '',
+       username varchar(100) NOT NULL DEFAULT '',
+       password varchar(100) NOT NULL DEFAULT ''
+       max_form_count INT NOT NULL DEFAULT '250'
+    )  ENGINE=InnoDB;
+
+   ALTER TABLE pdf_user_mailbox
+     ADD PRIMARY KEY (`id`);
+
+   ALTER TABLE pdf_user_mailbox
+     MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
 
    CREATE TABLE pdf_api_priv (
        id int NOT NULL,
@@ -127,8 +225,13 @@ CREATE TABLE pdf_org (
        data_json varchar(4000)  NOT NULL DEFAULT '',
        email_from varchar(200) NOT NULL DEFAULT '',
        email_to varchar(200) NOT NULL DEFAULT '',
+       forwarded varchar(20) NOT NULL DEFAULT '',
+       original_email_from varchar(200) NOT NULL DEFAULT '',
+       original_email_to varchar(200) NOT NULL DEFAULT '',
+       pdf_file_path varchar(500) NOT NULL DEFAULT '',
        email_subject varchar(200) NOT NULL DEFAULT '',
-       email_body varchar(1000) NOT NULL DEFAULT ''
+       message_id varchar(200) NOT NULL DEFAULT '',
+       email_body text
    ) ENGINE=InnoDB;
 
    ALTER TABLE pdf_form_data
@@ -175,13 +278,16 @@ drop table if exists pdf_processed_email;
    CREATE TABLE pdf_processed_email (
        id int NOT NULL,
         create_timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        message_number varchar(20) NOT NULL DEFAULT '0',
+        message_id varchar(200) NOT NULL DEFAULT '',
         to_address varchar(280) NOT NULL DEFAULT '',
         from_address varchar(280) NOT NULL DEFAULT '',
-        message_number varchar(20) NOT NULL DEFAULT '0',
+        forwarded varchar(5) NOT NULL DEFAULT 'N',
+        original_sender varchar(280) NOT NULL DEFAULT '',
+        original_recipient varchar(280) NOT NULL DEFAULT '',
         subject varchar(280) NOT NULL DEFAULT '',
-        sender varchar(280) NOT NULL DEFAULT '',
-        body varchar(2800) NOT NULL DEFAULT '',
-        attachment_file_name varchar(280) NOT NULL DEFAULT '',
+        body text,
+        attachment_file_name varchar(480) NOT NULL DEFAULT '',
         processed varchar(2) NOT NULL DEFAULT 'N',
         form_data_id int NOT NULL DEFAULT '0'
      )  ENGINE=InnoDB;

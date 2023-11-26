@@ -7,28 +7,22 @@
 #
 # Optional Routes for Processing PDF Files using email.
 ###########################################################################################################
-import sqldata
-from sqldata import SqlData
+
+from kineticforms import KineticForms
 import json
 import random
 import hashlib
 import tempfile
 
-
 class KineticAuth:
 
     def __init__(self):
-        pass
+        self.kf = KineticForms('/var/pwd.json')
 
-    @staticmethod
-    def process_guest_login(j):
-        #
-        # Create the dict format the function will return.
-        #
+    def process_guest_login(self, j):
         results = {"error_code": 0, "error_msg": "", "data": {}}
-        #
         # Check that api_key is in dictionary passed in as j
-        #
+
         if 'public_key' not in j:
             results = {"error_code": 100, "error_msg": "Missing Public Key", "data": j}
             return results
@@ -47,13 +41,10 @@ class KineticAuth:
         else:
             email = j['email'].lower()
 
-
-        #
         # Query the API key provided to make sure it is valid.
-        #
         sql = "select * from pdf_api_key where public_key = '" + str(public_key) + "' and "
         sql += " private_key = '" + str(private_key) + "' and email = '" + str(email) + "'"
-        rs = SqlData.sql0(sql)
+        rs = self.kf.sql0(sql)
 
         if rs is not None:
             results = {"error_code": 0, "error_msg": "", "data": rs}
@@ -62,29 +53,19 @@ class KineticAuth:
             results = {"error_code": 105, "error_msg": "Invalid, email, public_key, private_key combination.", "data": {}}
             return results
 
-    @staticmethod
-    def check_api_key(j, priv):
-        #
-        # Create the dict format the function will return.
-        #
+
+    def check_api_key(self, j, priv):
         results = {"user_id": 0, "org_id": 0, "privs": [], "error": ""}
-        #
-        # Check that api_key is in dictionary passed in as j
-        #
+
         if 'api_key' not in j:
             results['error'] = "Missing API Key"
             return results
         else:
             key = j['api_key']
-        #
-        # Query the API key provided to make sure it is valid.
-        #
-        sql = "select * from pdf_api_key where api_key = '" + key + "'"
-        rs = SqlData.sql0(sql)
 
-        #
-        # If api_key does not exist or is not active return with error.
-        #
+        sql = "select * from pdf_api_key where api_key = '" + key + "'"
+        rs = self.kf.sql0(sql)
+
         if rs is not None:
             if rs['status'] != 'active':
                 results['error'] = "API Key is not active."
@@ -93,15 +74,10 @@ class KineticAuth:
             results['error'] = "Invalid API Key"
             return results
 
-        #
-        # Query the user account related to the api_key so we can return org_id.
-        #
         user_id = rs['user_id']
         sql = "select * from pdf_user where id = " + str(rs['user_id'])
-        user = SqlData.sql0(sql)
-        #
-        # If user does not exist or is not active return error.
-        #
+        user = self.kf.sql0(sql)
+
         user_id = 0
         if user:
 
@@ -115,18 +91,12 @@ class KineticAuth:
             results['error'] = "User Account is not Active"
             return results
 
-        #
-        # Set user_id and org_id
-        #
         results['user_id'] = rs['user_id']
         results['org_id'] = user['org_id']
 
-        #
-        # Query the privileges corresponding to the api_key and append to priv list.
-        #
         privs = []
         sql = "select priv_id from pdf_api_priv where key_id = " + str(rs['id'])
-        rs2 = SqlData.sql(sql)
+        rs2 = self.kf.sql(sql)
         if rs2:
             for i in rs2:
                 privs.append(i['priv_id'])
@@ -144,13 +114,11 @@ class KineticAuth:
             else:
                 return results
 
-    @staticmethod
-    def get_user_sql(user_id):
+    def get_user_sql(self, user_id):
         sql = "select * from pdf_user where id = " + str(user_id)
-        record = SqlData.sql0(sql)
+        record = self.kf.sql0(sql)
         return record
 
-    @staticmethod
     def get_user_from_api_key(api_key):
         j = {"api_key": api_key}
         u = KineticAuth.check_api_key(j, "read")
@@ -418,6 +386,8 @@ class KineticAuth:
 
         # return {"data": j, "error_code": "100", "error_msg": "Error: Email Address is required."}
 
+        kf = KineticForms('/var/pwd.json')
+
         email = j['email']
         first_name = j['first_name']
         org_name = j['org_name']
@@ -433,11 +403,11 @@ class KineticAuth:
         if first_name == '' or last_name =='':
             return {"data": {}, "error_code": "101", "error_msg": "Error: First Name and Last Name are Required."}
         sql = "select count(*) as c from pdf_blocked_email_address where email = '" + email.lower() + "'"
-        rs = SqlData.sql0(sql)
-        if rs['c'] > 0:
+        rs = kf.sql0(sql)
+        if str(rs['data']['c']) != "0":
             sql = "select count(*) as c from pdf_blocked_ip_address where ip = '" + client_host + "'"
-            rs2 = SqlData.sql0(sql)
-            if rs2['c'] == 0:
+            rs2 = kf.sql0(sql)
+            if str(rs2['data']['c']) == "0":
                 post_data = {
                     "table_name": "pdf_blocked_ip_address",
                     "action": "insert",
@@ -445,12 +415,12 @@ class KineticAuth:
                     "email": email.lower(),
                     "ip": client_host
                 }
-                SqlData.post(post_data)
+                kf.post(post_data)
             return {"data": {}, "error_code": "901", "error_msg": "Email address blocked."}
 
         sql = "select count(*) as c from pdf_blocked_ip_address where ip = '" + client_host + "'"
-        rs2 = SqlData.sql0(sql)
-        if rs2['c'] > 0:
+        rs2 = kf.sql0(sql)
+        if rs2['data']['c'] > 0:
             return {"data": {}, "error_code": "902", "error_msg": "IP address blocked."}
 
         #
@@ -499,8 +469,9 @@ class KineticAuth:
                      "ip_address": client_host,
                      "status": 'active'
                      }
-
-        key_id = SqlData.post(post_form)
+        print(post_form)
+        kid = kf.post(post_form)
+        key_id = kid['data']['id']
 
         # Add records for each privilege.
         for priv in privs:
@@ -510,7 +481,8 @@ class KineticAuth:
                          "key_id": key_id,
                          "priv_id": priv
                          }
-            SqlData.post(post_form)
+            print(post_form)
+            kf.post(post_form)
 
         rs = {"private_key": private_key, "public_key": public_key }
         return {"data": rs, "error_code": "0", "error_msg": ""}

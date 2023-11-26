@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, APIRouter
 import tempfile
-from kineticpdf import KineticPdf
+from processpdf import ProcessPdf
 
 pdf_router = APIRouter()
 
