@@ -14,7 +14,7 @@ import random
 import hashlib
 import tempfile
 
-class KineticAuth:
+class LocalAuth:
 
     def __init__(self):
         self.kf = KineticForms('/var/pwd.json')
@@ -47,7 +47,7 @@ class KineticAuth:
         rs = self.kf.sql0(sql)
 
         if rs is not None:
-            results = {"error_code": 0, "error_msg": "", "data": rs}
+            results = {"error_code": 0, "error_msg": "", "data": rs['data']}
             return results
         else:
             results = {"error_code": 105, "error_msg": "Invalid, email, public_key, private_key combination.", "data": {}}
@@ -121,8 +121,8 @@ class KineticAuth:
 
     def get_user_from_api_key(api_key):
         j = {"api_key": api_key}
-        u = KineticAuth.check_api_key(j, "read")
-        return KineticAuth.get_user_sql(u['user_id'])
+        u = LocalAuth.check_api_key(j, "read")
+        return LocalAuth.get_user_sql(u['user_id'])
 
 
     ###################################################################
@@ -139,15 +139,15 @@ class KineticAuth:
         if 'id' not in j:
             j['id'] = ""
 
-        api = KineticAuth.check_api_key(j, 'admin')
+        api = LocalAuth.check_api_key(j, 'admin')
         if api['error'] != '':
             return {"error": api['error']}
 
-        return KineticAuth.create_user(j)
+        return LocalAuth.create_user(j)
 
     @staticmethod
     def get_user_list(j):
-        api = KineticAuth.check_api_key(j, 'admin')
+        api = LocalAuth.check_api_key(j, 'admin')
         if api['error'] != '':
             return {"data": api['error'], "error_code": "404", "error_msg": api['error']}
 
@@ -158,11 +158,11 @@ class KineticAuth:
     @staticmethod
     def create_user(j):
 
-        api = KineticAuth.check_api_key(j, 'admin')
+        api = LocalAuth.check_api_key(j, 'admin')
         if api != '':
             return {"data": {}, "error_code": "404", "error_msg": api}
         contact = j['data']
-        return KineticAuth.process_create_user(contact)
+        return LocalAuth.process_create_user(contact)
 
     @staticmethod
     def process_create_user(contact):
@@ -219,7 +219,7 @@ class KineticAuth:
 
         user = j['user']
 
-        api = KineticAuth.check_api_key(user, 'admin')
+        api = LocalAuth.check_api_key(user, 'admin')
         if api['error'] != '':
             return {"error": api['error']}
 
@@ -243,11 +243,11 @@ class KineticAuth:
         if 'id' not in j:
             return {"error": "ID must be provided to edit user."}
 
-        api = KineticAuth.check_api_key(j, 'self')
+        api = LocalAuth.check_api_key(j, 'self')
         if api['error'] != '' and api['user_id'] != j['id']:
             return {"error": api['error']}
 
-        return KineticAuth.create_user(j)
+        return LocalAuth.create_user(j)
 
     @staticmethod
     def add_user_priv(j):
@@ -275,11 +275,11 @@ class KineticAuth:
         if 'id' not in j:
             return {"error": "ID must be provided to edit user."}
 
-        api = KineticAuth.check_api_key(j, 'self')
+        api = LocalAuth.check_api_key(j, 'self')
         if api['error'] != '' and api['user_id'] != j['id']:
             return {"error": api['error']}
 
-        return KineticAuth.create_user(j)
+        return LocalAuth.create_user(j)
 
 
 
@@ -299,17 +299,17 @@ class KineticAuth:
     @staticmethod
     def create_org(j):
         org = j['organization']
-        return KineticAuth.create_organization(org)
+        return LocalAuth.create_organization(org)
 
     @staticmethod
     def update_org(j):
         org_id = j['org_id']
-        return KineticAuth.edit_organization(org_id)
+        return LocalAuth.edit_organization(org_id)
 
     @staticmethod
     def delete_org(j):
         org_id = j['org_id']
-        return KineticAuth.delete_organization(org_id)
+        return LocalAuth.delete_organization(org_id)
 
     @staticmethod
     def get_org(j):
@@ -493,7 +493,7 @@ class KineticAuth:
     @staticmethod
     def delete_user_keys(key):
 
-        api = KineticAuth.check_api_key(key, 'admin')
+        api = LocalAuth.check_api_key(key, 'admin')
         if api['error'] != '':
             return {"error": api['error']}
 
@@ -502,7 +502,7 @@ class KineticAuth:
             if key['final'] == 'Y':
                 sql = "delete from pdf_api_key where user_id = " + str(key['user_id'])
 
-        SqlData.execute(sql)
+        SqlData.kf.execute(sql)
 
         return {"user_id": key['user_id'], "error": ""}
 
@@ -512,7 +512,7 @@ class KineticAuth:
     @staticmethod
     def delete_key(key):
 
-        api = KineticAuth.check_api_key(key, 'self')
+        api = LocalAuth.check_api_key(key, 'self')
         if api['error'] != '':
             return {"error": api['error']}
 

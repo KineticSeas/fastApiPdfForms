@@ -74,6 +74,7 @@ async def get_form_data(private_key: str):
     j = {"private_key": private_key }
     return {"error_code": "0", "error_msg": "", "data": q.get_data(json.dumps(j)) }
 
+
 @data_router.post("/json_get_form_data/")
 async def get_data(j: str):
     q = Queries(DB_CONNECTION_VAULT)

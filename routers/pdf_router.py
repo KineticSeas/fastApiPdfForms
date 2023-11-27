@@ -11,7 +11,5 @@ pdf_router = APIRouter()
 # The application requires a JSON string that provides the information required
 # to get the template, query the database, and return a file.
 #################################################################################
-@pdf_router.post("/get_form/")
-async def get_form(json: str):
-    return KineticPdf.get_form(json)
+
 

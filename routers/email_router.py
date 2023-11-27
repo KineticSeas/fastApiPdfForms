@@ -40,22 +40,22 @@ async def process_chatgpt(request: Request):
     return {"data": d, "error_code": "0", "error_msg": ""}
 
 
-@email_router.post('/reply-to-old/')
-async def process_forms(request: Request):
-    kf = KineticForms(DB_CONNECTION_VAULT)
-    sql = "select * from pdf_processed_email order by id"
-    rs = kf.sql(sql)
-    ke = KineticEmail(EMAIL_CONNECTION_VAULT)
-    for i in rs['data']:
-        message_id = i['message_id']
-        msg = ke.get_message_by_id(message_id,"Inbox")
-        ke.reply_to_email(msg, "This is reply from the nested functions", None)
-    return {"C":"C"}
+#@email_router.post('/reply-to-old/')
+#async def process_forms(request: Request):
+#    kf = KineticForms(DB_CONNECTION_VAULT)
+#    sql = "select * from pdf_processed_email order by id"
+#    rs = kf.sql(sql)
+#    ke = KineticEmail(EMAIL_CONNECTION_VAULT)
+#    for i in rs['data']:
+#        message_id = i['message_id']
+##        msg = ke.get_message_by_id(message_id,"Inbox")
+#        ke.reply_to_email(msg, "This is reply from the nested functions", None)
+#    return {"C":"C"}
 
 
-@email_router.post('/create_email_account/')
-async def process_email():
-    return ProcessEmail.process_inbox_batch(EMAIL_CONNECTION_VAULT)
+#@email_router.post('/create_email_account/')
+#async def process_email():
+#    return ProcessEmail.process_inbox_batch(EMAIL_CONNECTION_VAULT)
 
 @email_router.post('/clear_touch/')
 async def clear_touch():
@@ -63,15 +63,15 @@ async def clear_touch():
     return kf.clear_touch()
 
 
-@email_router.post("/email-form/")
-async def email_form():
-    j = {}
-    return ProcessEmail.email_form(j)
+#@email_router.post("/email-form/")
+#async def email_form():
+#    j = {}
+#    return ProcessEmail.email_form(j)
 
 
-@email_router.post('/get-mail/')
-async def get_mail(request: Request):
-    json_data = await request.json()
-    d = ProcessEmail.get_messages(json_data)
-    return {"data": d, "error_code": "0", "error_msg": ""}
+#@email_router.post('/get-mail/')
+#async def get_mail(request: Request):
+#    json_data = await request.json()
+#    d = ProcessEmail.get_messages(json_data)
+#    return {"data": d, "error_code": "0", "error_msg": ""}
 

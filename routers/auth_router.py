@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, APIRouter, Request
-from kineticauth import KineticAuth
+from localauth import LocalAuth
 from processpdf import ProcessPdf
 from kineticpdf import KineticPdf
 auth_router = APIRouter()
@@ -125,7 +125,8 @@ async def create_guest_key(request: Request):
     user_agent = request.headers.get('user-agent')
     json_data['user_agent'] = user_agent
     json_data['client_host'] = client_host
-    return KineticAuth.create_guest_key(json_data)
+    la = LocalAuth()
+    return la.create_guest_key(json_data)
 
 
 @auth_router.post('/guest-login/')
@@ -136,15 +137,17 @@ async def process_guest_login(request: Request):
     user_agent = request.headers.get('user-agent')
     json_data['user_agent'] = user_agent
     json_data['client_host'] = client_host
-    return KineticAuth.process_guest_login(json_data)
+    ka = LocalAuth()
+    return ka.process_guest_login(json_data)
 
 
 @auth_router.post('/guest-forms/')
 async def get_guest_login(request: Request):
+    pp = ProcessPdf()
     j_data = await request.json()
     json_data = j_data['data']
     client_host = request.client.host
     user_agent = request.headers.get('user-agent')
     json_data['user_agent'] = user_agent
     json_data['client_host'] = client_host
-    return ProcessPdf.get_guest_forms(json_data)
+    return pp.get_guest_forms(json_data)

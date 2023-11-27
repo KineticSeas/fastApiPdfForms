@@ -2,14 +2,10 @@ import pdfrw
 
 import json
 import shutil
-import os
 from pathlib import Path
-import PyPDF2
 from openpyxl import Workbook
-import base64
-import pikepdf
 from kineticpdf import KineticPdf
-from kineticauth import KineticAuth
+from localauth import LocalAuth
 from kineticforms import KineticForms
 import copy
 
@@ -20,13 +16,12 @@ DB_CONNECTION_VAULT = "/var/pwd.json"
 class ProcessPdf:
 
     def __init__(self):
-        pass
+        self.kf = KineticForms(DB_CONNECTION_VAULT)
 
-    @staticmethod
-    def upload_template(temp_file_path, file_name, api_key, template_name, template_description):
+    def upload_template(self, temp_file_path, file_name, api_key, template_name, template_description):
 
         base_path = '/var/www/templates/'
-        user = KineticAuth.get_user_from_api_key(api_key)
+        user = LocalAuth.get_user_from_api_key(api_key)
         user_id = user['id']
 
         dir_path = Path(base_path + str(user_id))
@@ -49,13 +44,12 @@ class ProcessPdf:
             "template_name": template_name,
             "template_description": template_description
         }
-        i = SqlData.post(post)
+        i = self.kf.post(post)
 
         return {"id": i}
 
-    @staticmethod
-    def json_load_form_sql(j):
-        kf = KineticForms(DB_CONNECTION_VAULT)
+
+    def json_load_form_sql(self, j):
         if not isinstance(j, dict):
             j = json.loads(j)
 
@@ -64,7 +58,7 @@ class ProcessPdf:
 
         sql = "select * from pdf_form_data where id = " + str(form_key)
 
-        rs = kf.sql0(sql)
+        rs = self.kf.sql0(sql)
         values = rs['data']['data_json']
         values = json.loads(values)
 
@@ -98,7 +92,7 @@ class ProcessPdf:
         if "pdf_file_path" in values:
             del values['pdf_file_path']
 
-        r = KineticPdf.fill_pdf_form('/Users/user/Downloads/Big Test PDF Form.pdf','/Users/user/Downloads/a.pdf', values, None)
+        r = self.fill_pdf_form('/Users/user/Downloads/Big Test PDF Form.pdf','/Users/user/Downloads/a.pdf', values, None)
         return { "k": r }
 
     #########################################################################
@@ -110,8 +104,8 @@ class ProcessPdf:
     #   app_id: 999
     # }
     #########################################################################
-    @staticmethod
-    def get_data(j: str):
+
+    def get_data(self, j: str):
         #
         # Convert JSON string parameter to dict.
         #
@@ -120,7 +114,7 @@ class ProcessPdf:
         #
         #  Validate the API key.  If an error is return, return the error.
         #
-        api = KineticAuth.check_api_key(parameters, 'read')
+        api = LocalAuth.check_api_key(parameters, 'read')
         if api['error'] != '':
             return {"error": api['error'], "data": []}
 
@@ -157,7 +151,7 @@ class ProcessPdf:
         #
         # Execute the query.
         #
-        recordset = SqlData.sql(sql)
+        recordset = self.kf.sql(sql)
         output = []
         for record in recordset:
             r={}
@@ -177,8 +171,8 @@ class ProcessPdf:
     # Register a new organization and primary contact user by uploading a
     # registration form.
     ##############################################################################
-    @staticmethod
-    def registration_form(path):
+
+    def registration_form(self, path):
         # Process the form like a standard form so we can debug issue later.
         KineticPdf.process_pdf_form(path)
 
@@ -218,19 +212,19 @@ class ProcessPdf:
             "phone": formdata['phone']
         }
 
-        response = KineticAuth.create_organization(primary_contact)
+        response = LocalAuth.create_organization(primary_contact)
         if response['org_id'] == 0:
             return {"errors": response['errors']}
 
         org_id = response['org_id']
         primary_contact['org_id'] = org_id
 
-        response = KineticAuth.create_user(primary_contact)
+        response = LocalAuth.create_user(primary_contact)
         if response['user_id'] == 0:
             return {"errors": response['errors']}
 
         user_id = response['user_id']
-        KineticAuth.create_api_key(org_id, user_id, ["full"])
+        LocalAuth.create_api_key(org_id, user_id, ["full"])
 
         if formdata['first_name'] != '' and formdata['last_name'] != '' and formdata['email'] != '' and formdata['phone'] != '':
             technical_contact = {
@@ -242,7 +236,7 @@ class ProcessPdf:
                 "phone": formdata['phone_tc'],
                 "org_id": org_id
             }
-            user_id = KineticAuth.create_user(technical_contact)
+            user_id = ~LocalAuth.create_user(technical_contact)
         else:
             technical_contact = {
                 "salutation": "",
@@ -254,7 +248,7 @@ class ProcessPdf:
                 "org_id": ""
             }
 
-        KineticAuth.create_api_key(org_id, user_id, ["full"])
+        LocalAuth.create_api_key(org_id, user_id, ["full"])
         return {"errors": [], "primary_contact": primary_contact, "technical_contact": technical_contact }
 
     @staticmethod
@@ -266,8 +260,8 @@ class ProcessPdf:
     def delete_form_data(j):
         pass
 
-    @staticmethod
-    def get_template_list(j: str):
+
+    def get_template_list(self, j: str):
 
         if 'api_key' not in j:
             return {"error": "Missing API Key"}
@@ -275,7 +269,7 @@ class ProcessPdf:
         if 'id' not in j:
             j['id'] = ""
 
-        api = KineticAuth.check_api_key(j, 'read')
+        api = LocalAuth.check_api_key(j, 'read')
         if api['error'] != '':
             return {"error": api['error']}
         #
@@ -286,13 +280,12 @@ class ProcessPdf:
         if "user_id" in j:
             sql+= "and user_id = " + str(j['user_id'])
 
-
-        recordset = SqlData.sql(sql)
+        recordset = self.kf.sql(sql)
 
         return recordset
 
-    @staticmethod
-    def get_guest_xls(j):
+
+    def get_guest_xls(self, j):
 
         results = {"error_code": 0, "error_msg": "", "data": j}
 
@@ -317,7 +310,7 @@ class ProcessPdf:
         sql = "select * from pdf_form_data where form_id = '" + str(public_key) + "' order by id desc"
         print(sql)
 
-        recordset = SqlData.sql(sql)
+        recordset = self.kf.sql(sql)
         output = []
         counter = 0
         for record in recordset:
@@ -401,8 +394,7 @@ class ProcessPdf:
         return results
 
 
-    @staticmethod
-    def get_guest_forms(j):
+    def get_guest_forms(self, j):
 
         results = {"error_code": 0, "error_msg": "", "data": j}
 
@@ -426,9 +418,9 @@ class ProcessPdf:
 
         sql = "select * from pdf_form_data where form_id = '" + str(public_key) + "' order by id desc"
         print(sql)
-        recordset = SqlData.sql(sql)
+        recordset = self.kf.sql(sql)
         output = []
-        for record in recordset:
+        for record in recordset['data']:
             r={}
             r['id'] = record['id']
             r['create_timestamp'] = record['create_timestamp']
