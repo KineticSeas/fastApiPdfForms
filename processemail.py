@@ -24,9 +24,6 @@ class ProcessEmail:
     def __init__(self, db_connection_path, email_connection_path, attachment_path):
         # db_connection_path can be a str or dict.
         # email_connection_path can be a str or dict.
-        print(db_connection_path)
-        print(email_connection_path)
-        print(attachment_path)
         self.kg = KineticGlue(db_connection_path, email_connection_path)
         self.kf = KineticForms(db_connection_path)
         self.ke = KineticEmail(email_connection_path)
@@ -84,7 +81,6 @@ class ProcessEmail:
 
         y = self.get_user_from_pdf_key(msg)
 
-        print(y)
         public_key = y['public_key']
         private_key = y['private_key']
         user_id = y['user_id']
@@ -120,7 +116,6 @@ class ProcessEmail:
                 "message_id": msg['message_id'],
                 "email_body": msg['body']
             }
-            print(post)
             y = self.kf.post(post)
             if y['error_code'] == "0":
                 self.kf.touch(touch)
@@ -151,19 +146,40 @@ class ProcessEmail:
             "processed": "Y",
             "form_data_id": "0"
         }
-        print(post)
         self.kf.post(post)
 
     def message_function(self, message):
+        print('Processing Message')
         if self.kf.touched(message):
             print('message was processed')
-            print(message)
         else:
-            self.kf.touch(message)
-            print('processing message')
+            if 'pdf_file_path' in message:
+                self.ke.reply_to_email(message['message_id'], "Your form has been received.")
             self.save_processed_email(message)
+            self.kf.touch(message)
+
+    def blank_attachment(self, message):
+        print('Processing Blank Attachment')
+        message['blank_attachment'] = 'Yes'
+        if self.kf.touched(message):
+            pass
+        else:
+            print('This EMAIL HAS A BLANK ATTACHMENT')
+            self.kf.touch(message)
+
+    def no_attachment(self, message):
+        print('Processing No Attachment')
+        message['no_attachment'] = 'Yes'
+        if self.kf.touched(message):
+            pass
+        else:
+            print(message)
+            self.ke.reply_to_email(message['message_id'], "The email you sent has no PDF attachment.")
+            print('This EMAIL HAS NO ATTACHMENT')
+            self.kf.touch(message)
 
     def attachment_function(self, message):
+        print('Processing Attachment')
         self.save_pdf_form(message)
 
     def process_inbox_batch(self):
@@ -171,8 +187,8 @@ class ProcessEmail:
         ## Called by endpoint
         ##
         list = self.kg.post_pdf_email(self.attachment_path, "Inbox", self.message_function,
-                                      self.attachment_function, noatttachment_function=None,
-                                      blankattachment_function=None)
+                                      self.attachment_function, noatttachment_function=self.no_attachment,
+                                      blankattachment_function=self.blank_attachment)
         return list
 
     def process_inbox_chatgpt(self):

@@ -20,7 +20,7 @@ ATTACHMENT_PATH = '/Users/user/Downloads'
 
 
 @email_router.post('/process-all-mailboxes/')
-async def process_all_mailboxed():
+async def process_all_mailboxes():
     pe = ProcessExternalEmail()
     d = pe.get_mailbox_list()
     return {"data": d, "error_code": "0", "error_msg": ""}
